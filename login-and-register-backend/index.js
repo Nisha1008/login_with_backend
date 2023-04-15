@@ -1,7 +1,9 @@
 import express from "express"
 import cors from "cors"
 import mongoose from "mongoose"
-
+import promisify from "util"
+// const promiseTimeout = promisify(setTimeout);
+// promiseTimeout(1000).then(() => console.log("I am a promise"));
 const app = express()
 app.use(express.json())
 app.use(express.urlencoded())
@@ -20,33 +22,34 @@ const userSchema = new mongoose.Schema({
 
 const User = new mongoose.model("User", userSchema)
 
-
-
-//routes
-app.post("/login", (req, res) => {
-
-    const { email, password } = req.body
-    User.findone({ email: email }, (err, user) => {
-        if (user) {
-            if (password === user.password) {
-                res.send({ message: "Login Successfull", user: user })
-            }
-            else {
-                res.send({ message: "password did not match" })
-            }
-        } else {
-            res.send("User not registered")
-        }
+function promiseTimeout(delay) {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve()
+        }, delay)
     })
+}
+//routes
+app.get("/", (req, res) => {
+    res.send("myapi");
+})
+
+app.use(function (err, req, res, text) {
+    console.error(err.stack)
+    res.type('text/plain')
+    res.status(500)
+    res.send('internal server error 500')
+})
+
+app.post("/login", (req, res) => {
+    res.send("login page");
 })
 app.post("/register", (req, res) => {
-    const { name, email, password } = req.body
+    const { name, email, password } = req.body;
     User.findOne({ email: email }, (err, user) => {
         if (user) {
-            res.send({ message: "User Already Registered" })
-        }
-        else {
-
+            res.send({ message: "User already registered" })
+        } else {
             const user = new User({
                 name,
                 email,
@@ -54,15 +57,19 @@ app.post("/register", (req, res) => {
             })
             user.save(err => {
                 if (err) {
-                    res.send(err)
-                }
-                else {
-                    res.send({ message: "Successfully Registered" })
+                    req.send(err)
+                } else {
+                    res.send({ message: "Sucessfully Registered" })
                 }
             })
+
         }
     })
+
+    // console.log(req.body);
 })
-app.listen(9002, () => {
-    console.log("be started at port 9002")
+
+promiseTimeout(1000).then(() => console.log("I am a promise"));
+app.listen(5000, () => {
+    console.log("be started at port 5000");
 })
